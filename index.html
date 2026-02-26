@@ -1,0 +1,906 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Medi-Solutions | Coverage Comparison Tool</title>
+
+  <!-- Optional: jsPDF for "Download Summary PDF" -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+  <style>
+    :root{
+      --msBlue:#0f4c81;
+
+      /* LIGHT DEFAULT THEME */
+      --bg:#f7f8fb;
+      --bg2:#ffffff;
+      --card:#ffffff;
+      --text:#0b1220;
+      --muted:#556070;
+      --line:#d8dee8;
+
+      --good:#2dd4bf;
+      --warn:#fb7185;
+
+      --radius:18px;
+    }
+
+    /* Optional dark mode (still available via toggle) */
+    [data-theme="dark"]{
+      --bg:#0b0b0c;
+      --bg2:#101013;
+      --card:#141416;
+      --text:#f3f4f6;
+      --muted:#9aa0a6;
+      --line:#26262a;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+      background:linear-gradient(180deg,var(--bg), var(--bg2));
+      color:var(--text);
+    }
+    .wrap{max-width:1200px;margin:0 auto;padding:18px}
+
+    header{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.92);
+      border-radius:22px;
+      padding:16px;
+      box-shadow:0 10px 30px rgba(0,0,0,.08);
+    }
+    [data-theme="dark"] header{
+      background:rgba(255,255,255,.02);
+      box-shadow:0 18px 60px rgba(0,0,0,.25);
+    }
+
+    .topRow{
+      display:flex;
+      gap:14px;
+      align-items:flex-start;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+
+    .brand{
+      display:flex;
+      gap:14px;
+      align-items:center;
+      min-width:320px;
+    }
+    .brand img{
+      width:220px;
+      height:auto;
+      display:block;
+    }
+    .brandText h1{
+      margin:0;
+      font-size:18px;
+      color:var(--msBlue);
+      letter-spacing:.2px;
+    }
+    .brandText p{
+      margin:4px 0 0;
+      font-size:12.5px;
+      color:var(--muted);
+    }
+    .brandText .contact{
+      margin-top:6px;
+      font-weight:700;
+      color:var(--text);
+      opacity:.92;
+    }
+
+    .meta{
+      display:grid;
+      gap:10px;
+      min-width:320px;
+      align-content:start;
+    }
+
+    .metaGrid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+    @media (max-width: 760px){
+      .metaGrid{grid-template-columns:1fr}
+      .brand img{width:200px}
+    }
+
+    label{font-size:12px;color:var(--muted);font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+
+    input, select, textarea{
+      width:100%;
+      padding:10px 10px;
+      border-radius:12px;
+      background:#fff;
+      border:1px solid var(--line);
+      color:var(--text);
+      outline:none;
+    }
+    [data-theme="dark"] input,
+    [data-theme="dark"] select,
+    [data-theme="dark"] textarea{
+      background:rgba(0,0,0,.14);
+      color:var(--text);
+      border:1px solid var(--line);
+    }
+    textarea{min-height:90px;resize:vertical}
+
+    .actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-end;
+      margin-top:12px;
+    }
+    button{
+      cursor:pointer;
+      border:1px solid var(--line);
+      background:#fff;
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:14px;
+      font-weight:800;
+      letter-spacing:.2px;
+    }
+    [data-theme="dark"] button{
+      background:transparent;
+      color:var(--text);
+    }
+    button.primary{
+      border-color:rgba(15,76,129,.55);
+      box-shadow:0 0 0 3px rgba(15,76,129,.10) inset;
+    }
+    button:hover{border-color:rgba(15,76,129,.75)}
+
+    .grid{
+      margin-top:14px;
+      display:grid;
+      grid-template-columns: 1.65fr .95fr;
+      gap:14px;
+    }
+    @media (max-width: 980px){ .grid{grid-template-columns:1fr} }
+
+    .card{
+      background:rgba(255,255,255,.92);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:16px;
+      box-shadow:0 10px 30px rgba(0,0,0,.07);
+    }
+    [data-theme="dark"] .card{
+      background:rgba(255,255,255,.02);
+      box-shadow:0 18px 60px rgba(0,0,0,.22);
+    }
+
+    .tabs{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-bottom:12px;
+    }
+    .tab{
+      padding:10px 12px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:#fff;
+      font-weight:900;
+      font-size:12.5px;
+      cursor:pointer;
+      user-select:none;
+    }
+    [data-theme="dark"] .tab{background:rgba(255,255,255,.02)}
+    .tab.active{
+      border-color:rgba(15,76,129,.85);
+      box-shadow:0 0 0 3px rgba(15,76,129,.12) inset;
+    }
+
+    .section{display:none}
+    .section.active{display:block}
+
+    .two{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width: 720px){ .two{grid-template-columns:1fr} }
+
+    h2{margin:0 0 10px;font-size:14px;letter-spacing:.2px}
+    h3{
+      margin:14px 0 8px;
+      font-size:12px;
+      color:var(--muted);
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.12em;
+    }
+
+    .row{
+      display:grid;
+      grid-template-columns: 1.25fr 1fr;
+      gap:10px;
+      align-items:center;
+      margin:8px 0;
+    }
+    .hint{
+      margin-top:10px;
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.35;
+    }
+    .divider{height:1px;background:var(--line);margin:12px 0}
+
+    .kpi{
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:12px;
+      background:#fff;
+    }
+    [data-theme="dark"] .kpi{background:rgba(255,255,255,.02)}
+    .kpi .label{
+      font-size:12px;
+      color:var(--muted);
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.10em;
+    }
+    .kpi .value{
+      margin-top:6px;
+      font-size:22px;
+      font-weight:1000;
+    }
+    .kpi .sub{margin-top:4px;font-size:12px;color:var(--muted)}
+    .best{
+      border-color:rgba(45,212,191,.55) !important;
+      box-shadow:0 0 0 3px rgba(45,212,191,.12) inset;
+    }
+
+    .pill{
+      display:inline-flex;gap:8px;align-items:center;
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:8px 10px;
+      color:var(--muted);
+      font-size:12px;
+      background:#fff;
+    }
+    [data-theme="dark"] .pill{background:rgba(255,255,255,.02)}
+
+    .foot{
+      margin-top:14px;
+      border:1px dashed var(--line);
+      border-radius:16px;
+      padding:12px;
+      font-size:11.5px;
+      color:var(--muted);
+      line-height:1.4;
+      background:#fff;
+    }
+    [data-theme="dark"] .foot{background:rgba(255,255,255,.02)}
+
+    .printOnly{display:none}
+    @media print{
+      body{background:#fff;color:#111}
+      header,.card{box-shadow:none}
+      button,.tabs,.hint,.pill,.noPrint{display:none !important}
+      .printOnly{display:block}
+      input,select,textarea{border:1px solid #bbb;color:#111;background:#fff}
+      .grid{grid-template-columns:1fr}
+      .brandText h1{color:#0f4c81}
+      .kpi{background:#fff}
+      .foot{border:1px solid #bbb}
+    }
+  </style>
+</head>
+
+<body data-theme="light">
+  <div class="wrap">
+    <header>
+      <div class="topRow">
+        <div class="brand">
+          <img src="medi-solutions-logo.png" alt="Medi-Solutions Insurance Agency Logo"
+               onerror="this.outerHTML='<div style=&quot;width:220px;height:64px;border:1px solid var(--line);border-radius:16px;display:grid;place-items:center;color:var(--msBlue);font-weight:1000;background:#fff&quot;>ADD LOGO</div>';">
+          <div class="brandText">
+            <h1>Medi-Solutions Insurance Agency, LLC</h1>
+            <p>Client Coverage Comparison Worksheet</p>
+            <p class="contact">Phone: <span id="agencyPhone"></span> &nbsp;|&nbsp; <a id="agencyLink" href="#" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline"></a></p>
+          </div>
+        </div>
+
+        <div class="meta">
+          <div class="metaGrid">
+            <div>
+              <label>Prepared For</label>
+              <input id="clientName" placeholder="Client Name">
+            </div>
+            <div>
+              <label>Date</label>
+              <input id="todayDate" readonly>
+            </div>
+            <div>
+              <label>Agent Name</label>
+              <input id="agentName" placeholder="Agent Name">
+            </div>
+            <div>
+              <label>Agent NPN</label>
+              <input id="agentNpn" placeholder="NPN">
+            </div>
+          </div>
+
+          <div class="actions noPrint">
+            <button type="button" onclick="toggleTheme()">Toggle Theme</button>
+            <button class="primary" type="button" onclick="recalcAll()">Recalculate</button>
+            <button type="button" onclick="window.print()">Print / Save PDF</button>
+            <button type="button" onclick="downloadSummaryPDF()">Download Summary PDF</button>
+            <button type="button" onclick="copySummary()">Copy Summary</button>
+            <button type="button" onclick="resetAll()">Reset</button>
+          </div>
+
+          <div class="hint noPrint">
+            <span class="pill">Tip: Use “Worst-Case” (Premium + Max OOP) to compare financial risk.</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- INPUTS -->
+      <div class="card">
+        <div class="tabs" role="tablist">
+          <div class="tab active" data-tab="work">Workplace</div>
+          <div class="tab" data-tab="medicare">Medicare</div>
+          <div class="tab" data-tab="partd">Part D</div>
+          <div class="tab" data-tab="dental">Dental</div>
+          <div class="tab" data-tab="accident">Accident</div>
+          <div class="tab" data-tab="cancer">Cancer</div>
+          <div class="tab" data-tab="hospital">Hospital Indemnity</div>
+          <div class="tab" data-tab="irmaa">IRMAA Estimator</div>
+          <div class="tab" data-tab="recommend">Recommendation</div>
+          <div class="tab" data-tab="notes">Notes</div>
+        </div>
+
+        <!-- Workplace -->
+        <section class="section active" id="work">
+          <h2>Workplace Health Insurance</h2>
+          <div class="two">
+            <div>
+              <h3>Premium & Cost Sharing</h3>
+              <div class="row"><label>Monthly Premium ($)</label><input type="number" step="0.01" id="w_premium" value="0"></div>
+              <div class="row"><label>Annual Deductible ($)</label><input type="number" step="0.01" id="w_deductible" value="0"></div>
+              <div class="row"><label>Annual Out-of-Pocket Max ($)</label><input type="number" step="0.01" id="w_oopmax" value="0"></div>
+              <div class="row"><label>Primary Care Copay ($)</label><input type="number" step="0.01" id="w_pcp" value="0"></div>
+              <div class="row"><label>Specialist Copay ($)</label><input type="number" step="0.01" id="w_spec" value="0"></div>
+              <div class="row"><label>ER Copay/Coinsurance ($)</label><input type="number" step="0.01" id="w_er" value="0"></div>
+            </div>
+            <div>
+              <h3>Usage Modeling</h3>
+              <div class="row"><label>PCP Visits (Annual)</label><input type="number" step="1" id="w_visits_pcp" value="0"></div>
+              <div class="row"><label>Specialist Visits (Annual)</label><input type="number" step="1" id="w_visits_spec" value="0"></div>
+              <div class="row"><label>ER Visits (Annual)</label><input type="number" step="1" id="w_visits_er" value="0"></div>
+              <div class="row"><label>Employer Help (Monthly $) (HSA/HRA)</label><input type="number" step="0.01" id="w_employer_help" value="0"></div>
+              <div class="divider"></div>
+              <div class="hint">Expected cost = Premium + (Copays × Visits) − Employer help. Worst-case = Premium + OOP Max − employer help.</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Medicare -->
+        <section class="section" id="medicare">
+          <h2>Medicare Approach</h2>
+
+          <div class="row">
+            <label>Medicare Path</label>
+            <select id="m_path">
+              <option value="supp">Original Medicare + Supplement (Medigap)</option>
+              <option value="ma">Medicare Advantage (MA / MAPD)</option>
+            </select>
+          </div>
+
+          <div class="two">
+            <div>
+              <h3>Part B + IRMAA</h3>
+              <div class="row"><label>Part B Monthly Premium ($)</label><input type="number" step="0.01" id="m_partb" value="0"></div>
+              <div class="row"><label>IRMAA Monthly Surcharge ($)</label><input type="number" step="0.01" id="m_irmaa" value="0"></div>
+              <div class="hint">Use IRMAA Estimator tab if you want to calculate and auto-fill.</div>
+            </div>
+
+            <div id="suppFields">
+              <h3>Supplement (Medigap)</h3>
+              <div class="row"><label>Supplement Monthly Premium ($)</label><input type="number" step="0.01" id="m_supp_premium" value="0"></div>
+              <div class="row"><label>Expected Annual Medicare Cost Sharing ($)</label><input type="number" step="0.01" id="m_supp_costshare" value="0"></div>
+              <div class="row"><label>Estimated “Worst-Case” Annual ($)</label><input type="number" step="0.01" id="m_supp_worst" value="0"></div>
+            </div>
+
+            <div id="maFields" style="display:none">
+              <h3>Medicare Advantage (MA/MAPD)</h3>
+              <div class="row"><label>MA Monthly Premium ($)</label><input type="number" step="0.01" id="m_ma_premium" value="0"></div>
+              <div class="row"><label>Annual Max Out-of-Pocket ($)</label><input type="number" step="0.01" id="m_ma_oopmax" value="0"></div>
+              <div class="row"><label>Expected Annual Copays/Coinsurance ($)</label><input type="number" step="0.01" id="m_ma_expected" value="0"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Part D -->
+        <section class="section" id="partd">
+          <h2>Part D (Prescription Drug Plan)</h2>
+          <div class="two">
+            <div>
+              <h3>Premiums</h3>
+              <div class="row"><label>Part D Monthly Premium ($)</label><input type="number" step="0.01" id="d_premium" value="0"></div>
+              <div class="row"><label>Extra Help / Subsidy (Monthly $)</label><input type="number" step="0.01" id="d_subsidy" value="0"></div>
+            </div>
+            <div>
+              <h3>Expected Rx Spend</h3>
+              <div class="row"><label>Expected Annual Rx Copays ($)</label><input type="number" step="0.01" id="d_rx" value="0"></div>
+              <div class="row"><label>Plan Deductible (Annual $)</label><input type="number" step="0.01" id="d_deductible" value="0"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Optional Benefits -->
+        <section class="section" id="dental">
+          <h2>Dental (Optional)</h2>
+          <div class="row"><label>Include Dental?</label>
+            <select id="x_dental_on"><option value="0">No</option><option value="1">Yes</option></select>
+          </div>
+          <div class="two">
+            <div>
+              <h3>Premiums</h3>
+              <div class="row"><label>Monthly Premium ($)</label><input type="number" step="0.01" id="x_dental_prem" value="0"></div>
+            </div>
+            <div>
+              <h3>Expected Use</h3>
+              <div class="row"><label>Expected Annual Dental Spend ($)</label><input type="number" step="0.01" id="x_dental_use" value="0"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="accident">
+          <h2>Accident (Optional)</h2>
+          <div class="row"><label>Include Accident?</label>
+            <select id="x_acc_on"><option value="0">No</option><option value="1">Yes</option></select>
+          </div>
+          <div class="two">
+            <div>
+              <h3>Premiums</h3>
+              <div class="row"><label>Monthly Premium ($)</label><input type="number" step="0.01" id="x_acc_prem" value="0"></div>
+            </div>
+            <div>
+              <h3>Expected Benefit Offset</h3>
+              <div class="row"><label>Expected Annual Benefit ($) (reduces net cost)</label><input type="number" step="0.01" id="x_acc_ben" value="0"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="cancer">
+          <h2>Cancer (Optional)</h2>
+          <div class="row"><label>Include Cancer?</label>
+            <select id="x_can_on"><option value="0">No</option><option value="1">Yes</option></select>
+          </div>
+          <div class="two">
+            <div>
+              <h3>Premiums</h3>
+              <div class="row"><label>Monthly Premium ($)</label><input type="number" step="0.01" id="x_can_prem" value="0"></div>
+            </div>
+            <div>
+              <h3>Expected Benefit Offset</h3>
+              <div class="row"><label>Expected Annual Benefit ($)</label><input type="number" step="0.01" id="x_can_ben" value="0"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="hospital">
+          <h2>Hospital Indemnity (Optional)</h2>
+          <div class="row"><label>Include Hospital Indemnity?</label>
+            <select id="x_hosp_on"><option value="0">No</option><option value="1">Yes</option></select>
+          </div>
+          <div class="two">
+            <div>
+              <h3>Premiums</h3>
+              <div class="row"><label>Monthly Premium ($)</label><input type="number" step="0.01" id="x_hosp_prem" value="0"></div>
+            </div>
+            <div>
+              <h3>Expected Benefit Offset</h3>
+              <div class="row"><label>Expected Annual Benefit ($)</label><input type="number" step="0.01" id="x_hosp_ben" value="0"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- IRMAA Estimator -->
+        <section class="section" id="irmaa">
+          <h2>IRMAA Estimator (Editable)</h2>
+          <div class="hint">IRMAA tiers change periodically. This table is editable for updates.</div>
+
+          <div class="two">
+            <div>
+              <h3>Client Inputs</h3>
+              <div class="row"><label>Filing Status</label>
+                <select id="ir_filing">
+                  <option value="single">Single</option>
+                  <option value="mfj">Married Filing Joint</option>
+                  <option value="mfs">Married Filing Separate</option>
+                </select>
+              </div>
+              <div class="row"><label>MAGI / Income Used ($)</label><input type="number" step="1" id="ir_income" value="0"></div>
+              <div class="row"><label>Estimated IRMAA Monthly ($)</label><input type="number" step="0.01" id="ir_result" value="0" readonly></div>
+              <div class="actions" style="justify-content:flex-start">
+                <button class="primary" type="button" onclick="calcIRMAA()">Estimate IRMAA</button>
+                <button type="button" onclick="applyIRMAA()">Apply to Medicare Tab</button>
+              </div>
+            </div>
+
+            <div>
+              <h3>Bracket Table (Edit These)</h3>
+              <div class="hint">Each row: Upper income limit + monthly surcharge.</div>
+              <div class="row"><label>Single upper limit #1</label><input type="number" id="ir_s_1" value="0"></div>
+              <div class="row"><label>Single surcharge #1 ($)</label><input type="number" step="0.01" id="ir_s_1s" value="0"></div>
+
+              <div class="row"><label>Single upper limit #2</label><input type="number" id="ir_s_2" value="0"></div>
+              <div class="row"><label>Single surcharge #2 ($)</label><input type="number" step="0.01" id="ir_s_2s" value="0"></div>
+
+              <div class="row"><label>Single upper limit #3</label><input type="number" id="ir_s_3" value="0"></div>
+              <div class="row"><label>Single surcharge #3 ($)</label><input type="number" step="0.01" id="ir_s_3s" value="0"></div>
+
+              <div class="row"><label>Single upper limit TOP</label><input type="number" id="ir_s_top" value="999999999"></div>
+              <div class="row"><label>Single surcharge TOP ($)</label><input type="number" step="0.01" id="ir_s_tops" value="0"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Recommendation -->
+        <section class="section" id="recommend">
+          <h2>Recommendation Helper (Talking Points)</h2>
+          <div class="two">
+            <div>
+              <h3>Client Priority</h3>
+              <div class="row"><label>Top Priority</label>
+                <select id="rec_priority">
+                  <option value="premium">Lowest monthly premium</option>
+                  <option value="risk">Lowest financial risk (worst-case)</option>
+                  <option value="access">Broadest access (providers/out-of-network)</option>
+                  <option value="extras">Most extras (dental/vision/gym)</option>
+                </select>
+              </div>
+              <div class="row"><label>Provider Freedom Important?</label>
+                <select id="rec_provider"><option value="yes">Yes</option><option value="no">No</option></select>
+              </div>
+              <div class="row"><label>Travel / Out of Area Use?</label>
+                <select id="rec_travel"><option value="yes">Yes</option><option value="no">No</option></select>
+              </div>
+              <div class="actions" style="justify-content:flex-start">
+                <button class="primary" type="button" onclick="buildRecommendation()">Generate Talking Points</button>
+              </div>
+            </div>
+            <div>
+              <h3>Suggested Direction</h3>
+              <textarea id="rec_out" placeholder="Click Generate Talking Points…"></textarea>
+            </div>
+          </div>
+        </section>
+
+        <!-- Notes -->
+        <section class="section" id="notes">
+          <h2>Notes / Client Considerations</h2>
+          <div class="two">
+            <div>
+              <h3>Travel / Family / Unforeseen</h3>
+              <div class="row"><label>Annual Travel Budget ($)</label><input type="number" step="0.01" id="n_travel" value="0"></div>
+              <div class="row"><label>Unforeseen Family Expenses ($)</label><input type="number" step="0.01" id="n_family" value="0"></div>
+              <div class="row"><label>Other Annual Health Budget ($)</label><input type="number" step="0.01" id="n_other" value="0"></div>
+            </div>
+            <div>
+              <h3>Notes</h3>
+              <textarea id="n_notes" placeholder="Networks, doctors, meds, referrals, underwriting notes, timing, etc."></textarea>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- TOTALS -->
+      <div class="card">
+        <h2>Comparison Totals</h2>
+
+        <div style="display:grid;gap:12px">
+          <div class="kpi" id="k_work_expected">
+            <div class="label">Workplace — Expected Annual</div>
+            <div class="value" id="work_expected">$0</div>
+            <div class="sub">Premium + modeled copays − employer help + notes budget</div>
+          </div>
+
+          <div class="kpi" id="k_work_worst">
+            <div class="label">Workplace — Worst-Case Annual</div>
+            <div class="value" id="work_worst">$0</div>
+            <div class="sub">Premium + OOP max − employer help + notes budget</div>
+          </div>
+
+          <div class="kpi" id="k_med_expected">
+            <div class="label">Medicare Route — Expected Annual</div>
+            <div class="value" id="med_expected">$0</div>
+            <div class="sub">Part B + IRMAA + Medicare choice + Part D + optionals + notes budget</div>
+          </div>
+
+          <div class="kpi" id="k_med_worst">
+            <div class="label">Medicare Route — Worst-Case Annual</div>
+            <div class="value" id="med_worst">$0</div>
+            <div class="sub">MA uses OOP max; Supp uses your entered “worst”</div>
+          </div>
+
+          <div class="kpi">
+            <div class="label">Client Snapshot (Copy/PDF)</div>
+            <div class="sub" id="summaryText" style="white-space:pre-wrap"></div>
+          </div>
+        </div>
+
+        <div class="foot">
+          <strong>Compliance Notice:</strong> This worksheet is intended for educational and comparison purposes only.
+          It does not constitute a contract, guarantee of benefits, or official rate quote. Medicare Supplement and Medicare Advantage plans are subject to eligibility, underwriting (if applicable), and carrier approval.
+          For official plan details, refer to the Summary of Benefits and Evidence of Coverage. Medi-Solutions Insurance Agency, LLC is not affiliated with or endorsed by the U.S. Government or the federal Medicare program.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const AGENCY_PHONE = "732-308-9500";
+    const AGENCY_WEB   = "https://www.medi-solutions.org";
+
+    const $ = (id) => document.getElementById(id);
+    const num = (id) => {
+      const v = parseFloat($(id).value);
+      return isNaN(v) ? 0 : v;
+    };
+    const on = (id) => $(id).value === "1";
+    const money = (x) => (Number.isFinite(x) ? x : 0).toLocaleString(undefined,{style:"currency",currency:"USD"});
+    const clamp0 = (x) => Math.max(0, x);
+
+    function todayMMDDYYYY(){
+      const d = new Date();
+      const mm = String(d.getMonth()+1).padStart(2,"0");
+      const dd = String(d.getDate()).padStart(2,"0");
+      const yy = d.getFullYear();
+      return `${mm}/${dd}/${yy}`;
+    }
+
+    function refreshMedicareUI(){
+      const path = $("m_path").value;
+      $("suppFields").style.display = (path==="supp") ? "" : "none";
+      $("maFields").style.display = (path==="ma") ? "" : "none";
+    }
+    $("m_path").addEventListener("change", ()=>{ refreshMedicareUI(); recalcAll(); });
+
+    function calcOptionalsAnnual(){
+      let prem = 0, useOrBenefit = 0;
+      if(on("x_dental_on")){ prem += num("x_dental_prem")*12; useOrBenefit += num("x_dental_use"); }
+      if(on("x_acc_on")){ prem += num("x_acc_prem")*12; useOrBenefit -= num("x_acc_ben"); }
+      if(on("x_can_on")){ prem += num("x_can_prem")*12; useOrBenefit -= num("x_can_ben"); }
+      if(on("x_hosp_on")){ prem += num("x_hosp_prem")*12; useOrBenefit -= num("x_hosp_ben"); }
+      return prem + useOrBenefit;
+    }
+
+    function calcNotesBudgetAnnual(){
+      return num("n_travel") + num("n_family") + num("n_other");
+    }
+
+    function calcWorkplace(){
+      const annualPremium = num("w_premium")*12;
+      const modeledCopays = (num("w_pcp")*num("w_visits_pcp")) + (num("w_spec")*num("w_visits_spec")) + (num("w_er")*num("w_visits_er"));
+      const employerHelp = num("w_employer_help")*12;
+      const notesBudget = calcNotesBudgetAnnual();
+      return {
+        expected: clamp0(annualPremium + modeledCopays - employerHelp + notesBudget),
+        worst: clamp0(annualPremium + num("w_oopmax") - employerHelp + notesBudget)
+      };
+    }
+
+    function calcPartD(){
+      const annualPrem = num("d_premium")*12;
+      const subsidy = num("d_subsidy")*12;
+      const annualRx = num("d_rx") + num("d_deductible");
+      return { expected: clamp0(annualPrem - subsidy + annualRx) };
+    }
+
+    function calcMedicare(){
+      const path = $("m_path").value;
+      const partB = num("m_partb")*12;
+      const irmaa = num("m_irmaa")*12;
+      const partD = calcPartD().expected;
+      const optionals = calcOptionalsAnnual();
+      const notesBudget = calcNotesBudgetAnnual();
+
+      let expectedCore = 0, worstCore = 0;
+      if(path==="supp"){
+        expectedCore = (num("m_supp_premium")*12) + num("m_supp_costshare");
+        worstCore = (num("m_supp_premium")*12) + num("m_supp_worst");
+      }else{
+        expectedCore = (num("m_ma_premium")*12) + num("m_ma_expected");
+        worstCore = (num("m_ma_premium")*12) + num("m_ma_oopmax");
+      }
+
+      return {
+        expected: clamp0(partB + irmaa + expectedCore + partD + optionals + notesBudget),
+        worst: clamp0(partB + irmaa + worstCore + partD + optionals + notesBudget),
+        path
+      };
+    }
+
+    function updateSummary(work, med){
+      const client = $("clientName").value.trim() || "Client";
+      const agent = $("agentName").value.trim() || "Agent";
+      const npn = $("agentNpn").value.trim() || "NPN";
+      const pathLabel = med.path==="supp" ? "Medicare + Supplement" : "Medicare Advantage";
+      $("summaryText").textContent =
+`${client} — Coverage Comparison
+Date: ${$("todayDate").value}
+Agent: ${agent} (${npn})
+
+WORKPLACE
+• Expected Annual: ${money(work.expected)}
+• Worst-Case Annual: ${money(work.worst)}
+
+${pathLabel}
+• Expected Annual: ${money(med.expected)}
+• Worst-Case Annual: ${money(med.worst)}
+
+NOTES
+${$("n_notes").value.trim() || "—"}
+`;
+    }
+
+    function recalcAll(){
+      const work = calcWorkplace();
+      const med = calcMedicare();
+      $("work_expected").textContent = money(work.expected);
+      $("work_worst").textContent = money(work.worst);
+      $("med_expected").textContent = money(med.expected);
+      $("med_worst").textContent = money(med.worst);
+      updateSummary(work, med);
+    }
+
+    function buildRecommendation(){
+      const p = $("rec_priority").value;
+      const provider = $("rec_provider").value;
+      const travel = $("rec_travel").value;
+      const path = $("m_path").value;
+
+      const work = calcWorkplace();
+      const med = calcMedicare();
+
+      let out = [];
+      out.push(`Priority selected: ${$("rec_priority").selectedOptions[0].text}`);
+      out.push(`• Workplace Expected: ${money(work.expected)} | Worst-Case: ${money(work.worst)}`);
+      out.push(`• Medicare Route Expected: ${money(med.expected)} | Worst-Case: ${money(med.worst)}`);
+
+      if(p==="premium") out.push(`• If monthly budget is the main concern, confirm premium path + doctor/Rx fit.`);
+      if(p==="risk") out.push(`• If risk control matters most, compare Worst-Case numbers (Premium + Max OOP).`);
+      if(p==="access") out.push(`• If access matters, review networks/out-of-network rules before deciding.`);
+      if(p==="extras") out.push(`• If extras matter, confirm what’s included vs purchased separately and if it meets needs.`);
+
+      if(provider==="yes") out.push(`• Provider freedom is important: verify doctors/hospitals and referral rules.`);
+      if(travel==="yes") out.push(`• Travel/out-of-area use: confirm coverage rules outside home area (especially MA).`);
+
+      out.push(path==="supp"
+        ? `• Selected Original Medicare + Supplement: emphasize predictability/access; confirm underwriting/timing where applicable.`
+        : `• Selected Medicare Advantage: emphasize bundled benefits/budget fit; confirm network + OOP max comfort.`);
+
+      $("rec_out").value = out.join("\n");
+    }
+
+    function calcIRMAA(){
+      const filing = $("ir_filing").value;
+      const income = num("ir_income");
+
+      const tiers = [
+        { upper: num("ir_s_1"), surcharge: num("ir_s_1s") },
+        { upper: num("ir_s_2"), surcharge: num("ir_s_2s") },
+        { upper: num("ir_s_3"), surcharge: num("ir_s_3s") },
+        { upper: num("ir_s_top"), surcharge: num("ir_s_tops") },
+      ].filter(t => t.upper > 0);
+
+      if(tiers.length===0){ alert("IRMAA table is empty. Enter at least one tier upper limit and surcharge."); return; }
+
+      let scale = 1;
+      if(filing==="mfj") scale = 2;
+      if(filing==="mfs") scale = 0.5;
+
+      let chosen = tiers[tiers.length-1].surcharge;
+      for(const t of tiers){
+        if(income <= t.upper * scale){ chosen = t.surcharge; break; }
+      }
+      $("ir_result").value = chosen.toFixed(2);
+      recalcAll();
+    }
+
+    function applyIRMAA(){
+      $("m_irmaa").value = (num("ir_result")).toFixed(2);
+      alert("IRMAA monthly surcharge applied to Medicare tab.");
+      recalcAll();
+    }
+
+    async function copySummary(){
+      try{
+        await navigator.clipboard.writeText($("summaryText").textContent || "");
+        alert("Summary copied to clipboard.");
+      }catch(e){
+        alert("Copy failed. You can manually select and copy the Snapshot text.");
+      }
+    }
+
+    function downloadSummaryPDF(){
+      const client = ($("clientName").value.trim() || "Client").replace(/[^\w\s-]/g,"").trim();
+      const fname = `${client} Coverage Comparison.pdf`;
+
+      if(!window.jspdf || !window.jspdf.jsPDF){
+        alert("PDF library didn’t load. Use Print / Save PDF instead.");
+        window.print();
+        return;
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit:"pt", format:"letter" });
+
+      const lines = ($("summaryText").textContent || "").split("\n");
+      let x = 40, y = 48;
+      doc.setFont("helvetica","normal");
+      doc.setFontSize(11);
+
+      for(const line of lines){
+        const wrapped = doc.splitTextToSize(line, 530);
+        for(const w of wrapped){
+          doc.text(w, x, y);
+          y += 14;
+          if(y > 740){ doc.addPage(); y = 48; }
+        }
+      }
+      doc.save(fname);
+    }
+
+    function toggleTheme(){
+      const b = document.body;
+      b.setAttribute("data-theme", b.getAttribute("data-theme")==="light" ? "dark" : "light");
+      localStorage.setItem("ms_theme", b.getAttribute("data-theme"));
+    }
+
+    function resetAll(){
+      if(!confirm("Reset all fields?")) return;
+      document.querySelectorAll("input,textarea").forEach(el=>{
+        if(el.id==="todayDate") return;
+        if(el.type==="number") el.value = 0;
+        else el.value = "";
+      });
+      document.querySelectorAll("select").forEach(el=>{ el.selectedIndex = 0; });
+      $("m_path").value = "supp";
+      refreshMedicareUI();
+      $("todayDate").value = todayMMDDYYYY();
+      recalcAll();
+    }
+
+    function init(){
+      $("agencyPhone").textContent = AGENCY_PHONE;
+
+      const link = $("agencyLink");
+      link.textContent = "www.medi-solutions.org";
+      link.href = AGENCY_WEB;
+
+      $("todayDate").value = todayMMDDYYYY();
+
+      const savedTheme = localStorage.getItem("ms_theme");
+      if(savedTheme) document.body.setAttribute("data-theme", savedTheme);
+
+      document.querySelectorAll("input,select,textarea").forEach(el=>{
+        el.addEventListener("input", recalcAll);
+        el.addEventListener("change", recalcAll);
+      });
+
+      refreshMedicareUI();
+      recalcAll();
+    }
+    document.addEventListener("DOMContentLoaded", init);
+  </script>
+</body>
+</html>
