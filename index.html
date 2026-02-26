@@ -901,6 +901,24 @@ ${$("n_notes").value.trim() || "—"}
       recalcAll();
     }
     document.addEventListener("DOMContentLoaded", init);
-  </script>
+  // TAB SWITCHING
+document.querySelectorAll(".tab").forEach(tab => {
+  tab.addEventListener("click", function () {
+
+    // remove active from all tabs
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+
+    // hide all sections
+    document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+
+    // activate clicked tab
+    this.classList.add("active");
+
+    // show matching section
+    const target = this.getAttribute("data-tab");
+    document.getElementById(target).classList.add("active");
+  });
+});</script>
 </body>
+
 </html>
